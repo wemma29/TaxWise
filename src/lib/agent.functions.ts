@@ -39,10 +39,20 @@ export const runTaxAgent = createServerFn({ method: "POST" })
       return { answer: "", verified: false, sources: [], trace, iterations: 0, stoppedByGuard: false, error: "AI service is not configured (missing API key)." };
     }
 
+    // Reuse the gateway-issued run id across all steps of one agent run.
+    let runId: string | undefined;
+    const runIdFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      if (runId) headers.set("X-Lovable-AIG-Run-ID", runId);
+      const response = await fetch(input, { ...init, headers });
+      runId ??= response.headers.get("X-Lovable-AIG-Run-ID")?.trim() || undefined;
+      return response;
+    };
     const provider = createOpenAI({
       baseURL: "https://ai.gateway.lovable.dev/v1",
       apiKey,
       headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+      fetch: runIdFetch,
     });
 
     let iteration = 0;

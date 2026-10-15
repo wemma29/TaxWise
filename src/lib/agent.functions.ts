@@ -34,7 +34,7 @@ export const runTaxAgent = createServerFn({ method: "POST" })
 
     const trace: TraceEvent[] = [{ type: "input", question: data.question }];
     const sources = new Map<string, { title: string; url: string }>();
-    const apiKey = process.env.LOVABLE_API_KEY;
+    const apiKey = process.env['LOVABLE_API_KEY'];
     if (!apiKey) {
       return { answer: "", verified: false, sources: [], trace, iterations: 0, stoppedByGuard: false, error: "AI service is not configured (missing API key)." };
     }

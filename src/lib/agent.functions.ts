@@ -6,8 +6,8 @@ export const MAX_ITERATIONS = 3;
 export type TraceEvent =
   | { type: "input"; question: string }
   | { type: "action"; iteration: number; text: string }
-  | { type: "tool_call"; iteration: number; tool: string; args: Record<string, unknown> }
-  | { type: "observation"; iteration: number; tool: string; result: Record<string, unknown> }
+  | { type: "tool_call"; iteration: number; tool: string; args: string }
+  | { type: "observation"; iteration: number; tool: string; result: string }
   | { type: "final"; iteration: number; text: string }
   | { type: "guard"; iteration: number; text: string };
 
@@ -51,12 +51,12 @@ export const runTaxAgent = createServerFn({ method: "POST" })
         description: "Retrieve passages from official IRS.gov publications and tax topics. Returns titles, URLs and excerpts.",
         inputSchema: z.object({ query: z.string().describe("Keyword search query about US individual tax") }),
         execute: async ({ query }) => {
-          trace.push({ type: "tool_call", iteration, tool: "search_irs", args: { query } });
+          trace.push({ type: "tool_call", iteration, tool: "search_irs", args: JSON.stringify({ query }, null, 2) });
           const r = await searchIrs(query);
           r.results.forEach((x) => sources.set(x.url, { title: x.title, url: x.url }));
           trace.push({
             type: "observation", iteration, tool: "search_irs",
-            result: { found: r.results.map((x) => ({ title: x.title, url: x.url, excerpt: x.excerpt.slice(0, 400) + "…" })), errors: r.errors },
+            result: JSON.stringify({ found: r.results.map((x) => ({ title: x.title, url: x.url, excerpt: x.excerpt.slice(0, 400) + "…" })), errors: r.errors }, null, 2),
           });
           return r.results.length ? r : { results: [], note: "No IRS information retrieved for this query." };
         },

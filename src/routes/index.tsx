@@ -29,7 +29,7 @@ function Index() {
     if (!q.trim()) return setErr("Please enter a tax question.");
     setLoading(true); setErr(null); setRes(null);
     try {
-      const r = (await run({ data: { question: q } })) as AgentResult;
+      const r = (await run({ data: { question: q } }));
       if (r.error) setErr(r.error);
       setRes(r);
     } catch (e) {
@@ -113,7 +113,7 @@ function Index() {
                     <span className="font-semibold uppercase text-accent">{t.type.replace("_", " ")}</span>
                     {"iteration" in t && <span className="ml-2 text-muted-foreground">iter {t.iteration}</span>}
                     <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-foreground">
-                      {t.type === "input" ? t.question : "text" in t ? t.text : JSON.stringify("args" in t ? t.args : t.result, null, 2)}
+                      {t.type === "input" ? t.question : "text" in t ? t.text : "args" in t ? t.args : t.result}
                     </pre>
                   </li>
                 ))}

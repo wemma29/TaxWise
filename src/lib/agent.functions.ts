@@ -6,8 +6,8 @@ export const MAX_ITERATIONS = 3;
 export type TraceEvent =
   | { type: "input"; question: string }
   | { type: "action"; iteration: number; text: string }
-  | { type: "tool_call"; iteration: number; tool: string; args: unknown }
-  | { type: "observation"; iteration: number; tool: string; result: unknown }
+  | { type: "tool_call"; iteration: number; tool: string; args: Record<string, unknown> }
+  | { type: "observation"; iteration: number; tool: string; result: Record<string, unknown> }
   | { type: "final"; iteration: number; text: string }
   | { type: "guard"; iteration: number; text: string };
 

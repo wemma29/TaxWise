@@ -29,7 +29,7 @@ function Index() {
     if (!q.trim()) return setErr("Please enter a tax question.");
     setLoading(true); setErr(null); setRes(null);
     try {
-      const r = await run({ data: { question: q } });
+      const r = (await run({ data: { question: q } })) as AgentResult;
       if (r.error) setErr(r.error);
       setRes(r);
     } catch (e) {

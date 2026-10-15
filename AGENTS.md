@@ -8,3 +8,4 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+- AI agent lives in src/lib/agent.functions.ts (server fn, AI SDK tool loop with stepCountIs guard); IRS retrieval in src/lib/irs-sources.server.ts — keeps secrets and fetching server-side.

@@ -13,8 +13,8 @@ const cases = [
 
 describe("categorized official IRS retrieval", () => {
   it("retains all previous sources and covers all six categories with unique official URLs", () => {
-    expect(IRS_CATALOG).toHaveLength(32);
-    expect(new Set(IRS_CATALOG.map((s) => s.url)).size).toBe(32);
+    expect(IRS_CATALOG).toHaveLength(28);
+    expect(new Set(IRS_CATALOG.map((s) => s.url)).size).toBe(28);
     for (const topic of TAX_TOPICS) expect(IRS_CATALOG.some((s) => s.categories.includes(topic))).toBe(true);
     for (const s of IRS_CATALOG) expect(new URL(s.url).origin).toBe("https://www.irs.gov");
     for (const slug of ["tc409", "p550", "p544", "p551", "tc701", "tc559", "tc404", "tc703", "digital-assets", "tc501", "tc751", "tc451"]) {

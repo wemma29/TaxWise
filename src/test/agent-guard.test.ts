@@ -42,6 +42,7 @@ describe("maximum-iteration guard", () => {
     expect(r.verified).toBe(false);
     expect(r.answer).toMatch(/maximum of 3 iterations/);
     expect(searches).toBeLessThanOrEqual(3);
-    expect(r.trace.at(-1)?.type).toBe("guard");
+    expect(r.trace.some((t) => t.type === "guard")).toBe(true);
+    expect(r.trace.at(-1)?.type).toBe("final");
   });
 });

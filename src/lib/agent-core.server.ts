@@ -150,6 +150,7 @@ ${approvedInputs ? `The user approved these edited inputs, which OVERRIDE any am
     } else {
       trace.push({ type: "final", iteration: iterations, text });
     }
+    if (trace.at(-1)?.type !== "final") trace.push({ type: "final", iteration: iterations, text: answer });
     return { answer, verified: verified && !stoppedByGuard, sources: [...sources.values()], trace, iterations, stoppedByGuard, calculation };
   } catch (e: unknown) {
     const err = e as { statusCode?: number; message?: string };

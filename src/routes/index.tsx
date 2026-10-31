@@ -103,16 +103,16 @@ function Index() {
                 <h2 className="font-serif text-xl font-bold text-primary">Answer</h2>
                 <span className={`rounded-full px-3 py-1 text-xs font-medium ${res.verified ? "bg-accent-soft text-accent" : "bg-muted text-muted-foreground"}`}>
                   {res.verified ? "Grounded in IRS sources" : "Not verified"}
-                </span>
-             </div>}
+                 </span>
+              </div>
+              <p className="whitespace-pre-wrap leading-relaxed text-card-foreground">{res.answer}</p>
+            </div>}
 
              {res.calculation && <div className="border-y border-border py-4">
                <h3 className="text-sm font-semibold text-primary">Calculated capital {res.calculation.classification}: {usd(Math.abs(res.calculation.gainOrLoss))}</h3>
                <p className="mt-2 break-words font-mono text-sm text-foreground">{res.calculation.formula}</p>
                <p className="mt-2 text-sm text-muted-foreground">Capital gain/loss only — not tax owed.</p>
              </div>}
-              <p className="whitespace-pre-wrap leading-relaxed text-card-foreground">{res.answer}</p>
-            </div>
 
             {res.sources.length > 0 && (
               <div>

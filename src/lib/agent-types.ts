@@ -19,6 +19,6 @@ export type AgentResult = {
   iterations: number;
   stoppedByGuard: boolean;
   error?: string;
-  calculation?: CapitalGainCalculation;
+  calculation?: CapitalGainCalculation | undefined;
   pendingApproval?: { inputs: CapitalGainInputs; token: string };
 };

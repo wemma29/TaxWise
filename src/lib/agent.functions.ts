@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { MAX_ITERATIONS, type AgentResult, type TraceEvent } from "./agent-types";
 import { validateCapitalGain, type CapitalGainInputs } from "./capital-gain";
 
-type AgentRequest = { question: string; approval?: { token: string; approved: boolean; inputs?: CapitalGainInputs } };
+type AgentRequest = { question: string; approval?: { token: string; approved: boolean; inputs?: CapitalGainInputs | undefined } };
 
 export { MAX_ITERATIONS };
 export type { AgentResult, TraceEvent };

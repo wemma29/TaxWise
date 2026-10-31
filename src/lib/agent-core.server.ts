@@ -8,13 +8,13 @@ type SearchFn = (query: string) => Promise<{ results: { title: string; url: stri
 export type AgentState = {
   question: string; messages: ModelMessage[]; trace: TraceEvent[];
   sources: { title: string; url: string }[]; iterations: number;
-  calculation?: CapitalGainCalculation;
+  calculation?: CapitalGainCalculation | undefined;
   pending?: { approvalId: string; toolCallId: string; inputs: CapitalGainInputs; iteration: number };
 };
 export type AgentLoopResult = AgentResult & { continuation?: AgentState };
 
 // Injected dependencies exercise the real approval and guard logic in tests.
-export async function runAgentLoop(opts: { question: string; model: LanguageModel; search: SearchFn; providerOptions?: Record<string, any>; state?: AgentState; decision?: { approved: boolean; inputs?: CapitalGainInputs }; calculate?: typeof calculateCapitalGain }): Promise<AgentLoopResult> {
+export async function runAgentLoop(opts: { question: string; model: LanguageModel; search: SearchFn; providerOptions?: Record<string, any>; state?: AgentState | undefined; decision?: { approved: boolean; inputs?: CapitalGainInputs | undefined } | undefined; calculate?: typeof calculateCapitalGain }): Promise<AgentLoopResult> {
   const { question, model, search } = opts;
   const trace: TraceEvent[] = [...(opts.state?.trace ?? [{ type: "input" as const, question }])];
   const sources = new Map<string, { title: string; url: string }>((opts.state?.sources ?? []).map((s) => [s.url, s]));
@@ -110,7 +110,7 @@ Start your final answer with exactly "[VERIFIED]" if the retrieved IRS excerpts 
         if (calls.length) trace.push({ type: "action", iteration, text: `Model selected: ${calls.map((c) => c.toolName).join(", ")}` });
         else if (text) trace.push({ type: "action", iteration, text: "Model selected a final response without a tool call." });
       },
-      providerOptions: opts.providerOptions,
+      ...(opts.providerOptions ? { providerOptions: opts.providerOptions } : {}),
     });
     const raw = (await result.text).trim();
     // The model must self-label; anything other than an explicit [VERIFIED] is treated as unverified.

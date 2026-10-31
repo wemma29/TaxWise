@@ -54,7 +54,7 @@ export function rankIrsSources(query: string) {
   const topics = identifyTaxTopics(query);
   if (!topics.length) return [];
   const q = new Set(terms(query));
-  return IRS_CATALOG.filter((source) => source.categories.some((topic) => topics.includes(topic)))
+  const ranked = IRS_CATALOG.filter((source) => source.categories.some((topic) => topics.includes(topic)))
     .map((source) => {
       const keywords = new Set(terms(source.keywords));
       const title = new Set(terms(source.title));
@@ -62,8 +62,9 @@ export function rankIrsSources(query: string) {
       return { source, score };
     })
     .filter(({ score }) => score >= 2)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    .sort((a, b) => b.score - a.score);
+  const best = ranked[0]?.score ?? 0;
+  return ranked.filter((r) => r.score >= Math.max(2, best * 0.45)).slice(0, 3);
 }
 
 export async function searchIrs(query: string, fetchPage: typeof fetch = fetch) {

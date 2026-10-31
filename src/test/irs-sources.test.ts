@@ -50,4 +50,9 @@ describe("categorized official IRS retrieval", () => {
   it("excludes investment publications from a focused filing-status question", () => {
     expect(rankIrsSources("Can I use head of household filing status?").every((r) => r.source.categories.includes("filing_status"))).toBe(true);
   });
+  it("excludes unrelated credits from a focused education-credit question", () => {
+    const ranked = rankIrsSources("American Opportunity Tax Credit Lifetime Learning Credit education tuition enrollment");
+    expect(ranked.some((r) => r.source.url.endsWith("education-credits-aotc-and-llc"))).toBe(true);
+    expect(ranked.some((r) => r.source.url.endsWith("adoption-credit"))).toBe(false);
+  });
 });

@@ -124,9 +124,9 @@ ${approvedInputs ? `The user approved these edited inputs, which OVERRIDE any am
     });
     const raw = (await result.text).trim();
     // The model must self-label; anything other than an explicit [VERIFIED] is treated as unverified.
-    const modelVerified = /^\[VERIFIED\]/i.test(raw);
-    const needsFacts = /^\[NEEDS FACTS\]/i.test(raw);
-    const text = raw.replace(/^\[(?:VERIFIED|NOT VERIFIED|NEEDS FACTS)\]\s*/i, "").trim();
+    const needsFacts = /\[NEEDS FACTS\]/i.test(raw);
+    const modelVerified = /^\[VERIFIED\]/i.test(raw) && !needsFacts;
+    const text = raw.replace(/\[(?:VERIFIED|NOT VERIFIED|NEEDS FACTS)\]\s*/gi, "").trim();
     const steps = await result.steps;
     const iterations = previousIterations + steps.length;
     const content = await result.content;

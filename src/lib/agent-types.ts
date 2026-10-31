@@ -1,3 +1,5 @@
+import type { CapitalGainCalculation, CapitalGainInputs } from "./capital-gain";
+
 export const MAX_ITERATIONS = 3;
 
 export type TraceEvent =
@@ -5,6 +7,7 @@ export type TraceEvent =
   | { type: "action"; iteration: number; text: string }
   | { type: "tool_call"; iteration: number; tool: string; args: string }
   | { type: "observation"; iteration: number; tool: string; result: string }
+  | { type: "approval_requested" | "approval" | "cancellation"; iteration: number; text: string }
   | { type: "final"; iteration: number; text: string }
   | { type: "guard"; iteration: number; text: string };
 
@@ -16,4 +19,6 @@ export type AgentResult = {
   iterations: number;
   stoppedByGuard: boolean;
   error?: string;
+  calculation?: CapitalGainCalculation;
+  pendingApproval?: { inputs: CapitalGainInputs; token: string };
 };

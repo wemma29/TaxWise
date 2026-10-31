@@ -93,7 +93,8 @@ The calculator needs purchasePrice, sellingPrice, basisAdjustment (signed additi
 Answer tax rules ONLY using retrieved IRS excerpts; cite sources by title and URL.
 If retrieved information is missing or insufficient, say clearly the answer could not be verified from IRS sources and do not invent tax rules.
 Never ask for SSNs or sensitive data. Do not prepare or file returns. Keep answers concise, plain text (no markdown), and end with a one-line reminder that this is educational, not professional advice.
-Start your final answer with exactly "[VERIFIED]" if the retrieved IRS excerpts directly support it, otherwise "[NOT VERIFIED]".`,
+Start your final answer with exactly "[VERIFIED]" if the retrieved IRS excerpts directly support it, otherwise "[NOT VERIFIED]".
+${approvedInputs ? `The user approved these edited inputs, which OVERRIDE any amounts in the original question: ${JSON.stringify(approvedInputs)}. The approved tool result is authoritative. Do not recalculate original amounts or request another calculation.` : ""}`,
       messages,
       tools,
       toolApproval: { calculate_capital_gain: "user-approval" },
@@ -104,7 +105,7 @@ Start your final answer with exactly "[VERIFIED]" if the retrieved IRS excerpts 
         iteration = previousIterations + stepNumber + 1;
         trace.push({ type: "action", iteration, text: `Iteration ${iteration}: model call started; selected tools are recorded below (not private reasoning).` });
         // On the last allowed step, forbid further tool calls.
-        return iteration >= MAX_ITERATIONS ? { toolChoice: "none" as const, activeTools: [] } : {};
+        return iteration >= MAX_ITERATIONS ? { toolChoice: "none" as const, activeTools: [] } : calculation ? { activeTools: ["search_irs" as const] } : {};
       },
       onStepFinish: ({ toolCalls: calls, text }) => {
         if (calls.length) trace.push({ type: "action", iteration, text: `Model selected: ${calls.map((c) => c.toolName).join(", ")}` });

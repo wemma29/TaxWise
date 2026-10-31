@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { runTaxAgent, MAX_ITERATIONS, type AgentResult } from "@/lib/agent.functions";
+import { Button } from "@/components/ui/button";
+import { CalculationApproval } from "@/components/calculation-approval";
+import { usd, type CapitalGainInputs } from "@/lib/capital-gain";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -10,6 +13,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Ask personal tax questions and get answers grounded in official IRS.gov sources, with a full agent trace." },
       { property: "og:title", content: "TaxWise AI — Educational Tax Research Assistant" },
       { property: "og:description", content: "Answers grounded in official IRS sources, with citations and an execution trace." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Index,
@@ -23,11 +28,12 @@ function Index() {
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<AgentResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [activeQuestion, setActiveQuestion] = useState("");
 
   async function submit(e?: React.FormEvent) {
     e?.preventDefault();
     if (!q.trim()) return setErr("Please enter a tax question.");
-    setLoading(true); setErr(null); setRes(null);
+    setLoading(true); setErr(null); setRes(null); setActiveQuestion(q.trim());
     try {
       const r = (await run({ data: { question: q } }));
       if (r.error) setErr(r.error);
@@ -35,6 +41,17 @@ function Index() {
     } catch (e) {
       setErr((e as Error).message || "Something went wrong.");
     } finally { setLoading(false); }
+  }
+
+  async function decide(approved: boolean, inputs?: CapitalGainInputs) {
+    if (!res?.pendingApproval || loading) return;
+    setLoading(true); setErr(null);
+    try {
+      const r = await run({ data: { question: activeQuestion, approval: { token: res.pendingApproval.token, approved, inputs } } });
+      if (r.error) setErr(r.error);
+      setRes(r);
+    } catch (e) { setErr(e instanceof Error ? e.message : "The approval could not be processed."); }
+    finally { setLoading(false); }
   }
 
   return (
@@ -54,17 +71,17 @@ function Index() {
 
         <form onSubmit={submit} className="mt-8 space-y-3">
           <label htmlFor="q" className="text-sm font-medium text-foreground">Your tax question</label>
-          <textarea id="q" value={q} onChange={(e) => setQ(e.target.value)} rows={3} maxLength={1000}
+           <textarea id="q" value={q} disabled={loading || Boolean(res?.pendingApproval)} onChange={(e) => setQ(e.target.value)} rows={3} maxLength={1000}
             placeholder="e.g. How are short-term capital gains taxed?"
             className="w-full rounded-md border border-input bg-background p-3 text-foreground outline-none focus:ring-2 focus:ring-ring" />
           <div className="flex flex-wrap items-center gap-3">
-            <button type="submit" disabled={loading}
+             <Button type="submit" disabled={loading || Boolean(res?.pendingApproval)}
               className="rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50">
               {loading ? "Researching…" : "Submit"}
-            </button>
-            <button type="button" onClick={() => setQ(SAMPLE)} className="text-sm text-accent underline-offset-4 hover:underline">
+             </Button>
+             <Button type="button" variant="link" disabled={loading || Boolean(res?.pendingApproval)} onClick={() => setQ(SAMPLE)} className="h-auto whitespace-normal p-0 text-left text-sm text-accent underline-offset-4 hover:underline">
               Try sample: “{SAMPLE}”
-            </button>
+             </Button>
           </div>
         </form>
 
@@ -75,19 +92,27 @@ function Index() {
           </div>
         )}
 
-        {err && <div className="mt-8 rounded-md border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{err}</div>}
+         {err && <div role="alert" className="mt-8 rounded-md border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{err}</div>}
+
+         {res?.pendingApproval && <CalculationApproval key={res.pendingApproval.token} inputs={res.pendingApproval.inputs} busy={loading} onDecision={decide} />}
 
         {res && !res.error && (
           <section className="mt-10 space-y-6">
-            <div className="rounded-lg border border-border bg-card p-6">
+             {!res.pendingApproval && <div className="rounded-lg border border-border bg-card p-6">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="font-serif text-xl font-bold text-primary">Answer</h2>
                 <span className={`rounded-full px-3 py-1 text-xs font-medium ${res.verified ? "bg-accent-soft text-accent" : "bg-muted text-muted-foreground"}`}>
                   {res.verified ? "Grounded in IRS sources" : "Not verified"}
-                </span>
+                 </span>
               </div>
               <p className="whitespace-pre-wrap leading-relaxed text-card-foreground">{res.answer}</p>
-            </div>
+            </div>}
+
+             {res.calculation && <div className="border-y border-border py-4">
+               <h3 className="text-sm font-semibold text-primary">Calculated capital {res.calculation.classification}: {usd(Math.abs(res.calculation.gainOrLoss))}</h3>
+               <p className="mt-2 break-words font-mono text-sm text-foreground">{res.calculation.formula}</p>
+               <p className="mt-2 text-sm text-muted-foreground">Capital gain/loss only — not tax owed.</p>
+             </div>}
 
             {res.sources.length > 0 && (
               <div>

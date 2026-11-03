@@ -13,11 +13,11 @@ const cases = [
 
 describe("categorized official IRS retrieval", () => {
   it("retains all previous sources and covers all six categories with unique official URLs", () => {
-    expect(IRS_CATALOG).toHaveLength(28);
-    expect(new Set(IRS_CATALOG.map((s) => s.url)).size).toBe(28);
+    expect(IRS_CATALOG).toHaveLength(30);
+    expect(new Set(IRS_CATALOG.map((s) => s.url)).size).toBe(30);
     for (const topic of TAX_TOPICS) expect(IRS_CATALOG.some((s) => s.categories.includes(topic))).toBe(true);
     for (const s of IRS_CATALOG) expect(new URL(s.url).origin).toBe("https://www.irs.gov");
-    for (const slug of ["tc409", "p550", "p544", "p551", "tc701", "tc559", "tc404", "tc703", "digital-assets", "tc501", "tc751", "tc451"]) {
+    for (const slug of ["tc409", "p550", "p544", "p551", "tc701", "tc559", "tc404", "tc703", "digital-assets", "tc501", "tc751", "tc451", "i1040gi", "about-form-1099-g"]) {
       expect(IRS_CATALOG.some((s) => s.url.endsWith(slug))).toBe(true);
     }
   });
@@ -54,5 +54,15 @@ describe("categorized official IRS retrieval", () => {
     const ranked = rankIrsSources("American Opportunity Tax Credit Lifetime Learning Credit education tuition enrollment");
     expect(ranked.some((r) => r.source.url.endsWith("education-credits-aotc-and-llc"))).toBe(true);
     expect(ranked.some((r) => r.source.url.endsWith("adoption-credit"))).toBe(false);
+  });
+  it("routes a 2025 unemployment reporting question to both the unemployment page and the 2025 Schedule 1 instructions", async () => {
+    const question = "I received $8,000 in unemployment compensation during 2025 and had no federal income tax withheld. Is it taxable, and where do I report it on my federal tax return?";
+    expect(identifyTaxTopics(question)).toContain("income");
+    const ranked = rankIrsSources(question);
+    expect(ranked.some((r) => r.source.url.endsWith("/unemployment-compensation"))).toBe(true);
+    expect(ranked.some((r) => r.source.url.endsWith("i1040gi"))).toBe(true);
+    const r = await searchIrs(question, async () => new Response("<main><p>Unemployment compensation is taxable income. You should receive a Form 1099-G showing in box 1 the total unemployment compensation paid to you in 2025. Report this amount on Schedule 1 (Form 1040), line 7.</p></main>"));
+    expect(r.results.map((s) => s.url)).toEqual(ranked.map((x) => x.source.url));
+    expect(r.results.every((s) => s.excerpt.includes("1099-G"))).toBe(true);
   });
 });

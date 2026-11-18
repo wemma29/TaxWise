@@ -15,4 +15,4 @@
 - [x] Reproduce T03 live and diagnose (no 2025 Schedule 1 source; 2021-dated excerpt).
 - [x] Add 2025 Form 1040 instructions and Form 1099-G sources; enrich unemployment keywords.
 - [x] Add T03 routing and agent verification tests; run full suite.
-- [x] Re-run T03 live and confirm a grounded, cited answer.
+- [x] Re-run T03 live and confirm a grounded, cited answer.- [x] Fix 2026 dependent filing requirement question (Pub 4012 Chart B retrieval)

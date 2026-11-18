@@ -1,6 +1,8 @@
 import { identifyTaxTopics, type TaxTopic } from "./tax-topics";
+import { extractPdfSection } from "./pdf-text.server";
 
-type IrsSource = { title: string; url: string; categories: TaxTopic[]; keywords: string };
+// pdf: official PDFs are streamed only until the named section is found, so huge publications stay cheap.
+type IrsSource = { title: string; url: string; categories: TaxTopic[]; keywords: string; pdf?: { anchor: string; requires: string; context?: string[] } };
 // Curated URLs are routing metadata, never tax evidence; excerpts come from live IRS responses.
 export const IRS_CATALOG: IrsSource[] = [
   { title: "Topic No. 409, Capital Gains and Losses", url: "https://www.irs.gov/taxtopics/tc409", categories: ["investments"], keywords: "capital gain loss stock sell sale holding period long-term short-term rate net investment asset" },
@@ -33,6 +35,8 @@ export const IRS_CATALOG: IrsSource[] = [
   { title: "Education credits - AOTC and LLC", url: "https://www.irs.gov/credits-deductions/individuals/education-credits-aotc-and-llc", categories: ["credits"], keywords: "education credits american opportunity aotc lifetime learning llc tuition student enrollment expenses" },
   { title: "Adoption Credit", url: "https://www.irs.gov/credits-deductions/individuals/adoption-credit", categories: ["credits"], keywords: "adoption credit qualified expenses child" },
   { title: "Instructions for Schedule D (Form 1040)", url: "https://www.irs.gov/instructions/i1040sd", categories: ["investments"], keywords: "capital gains losses loss limitation carryforward carryforwards schedule d net short-term long-term" },
+  { title: "Publication 4012 (2026 returns), Chart B – For Children and Other Dependents", url: "https://www.irs.gov/pub/irs-pdf/p4012.pdf", categories: ["filing_status", "dependents", "income"], keywords: "dependent dependents filing requirement requirements threshold thresholds must file need file required return claimed claim parents parent earned unearned gross income w2 wages salary chart 2026",
+    pdf: { anchor: "Chart B – For Children and Other Dependents", requires: "You must file a return if any of the following apply", context: ["AND at the end of 2026"] } },
 ];
 
 function strip(html: string) {
@@ -81,10 +85,19 @@ export async function searchIrs(query: string, fetchPage: typeof fetch = fetch) 
       if (new URL(res.url || s.url).hostname !== "www.irs.gov" && new URL(res.url || s.url).hostname !== "irs.gov") {
         errors.push(`${s.url}: non-IRS redirect rejected`); return;
       }
-      const html = await res.text();
-      // Keep page/year context and whole nearby blocks so lists of eligibility tests survive extraction.
-      const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1] ?? html;
-      const text = strip(main);
+      let text: string;
+      if (s.pdf) {
+        // A located PDF section is evidence as a whole; it is not narrowed by keyword blocks.
+        const pdf = await extractPdfSection(res, s.pdf);
+        const section = pdf.section.replace(/\s+/g, " ").trim();
+        results.push({ title: s.title, url: s.url, categories: s.categories, excerpt: [...pdf.context, section].join(" … ").slice(0, 8000) });
+        return;
+      } else {
+        const html = await res.text();
+        // Keep page/year context and whole nearby blocks so lists of eligibility tests survive extraction.
+        const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1] ?? html;
+        text = strip(main);
+      }
       const blocks = text.match(/[\s\S]{1,700}(?:\s|$)/g) ?? [];
       const top = blocks.map((x, i) => ({ x, i, score: terms(x).filter((t) => q.has(t)).length }))
         .filter((r) => r.score > 0).sort((a, b) => b.score - a.score).slice(0, 6);
